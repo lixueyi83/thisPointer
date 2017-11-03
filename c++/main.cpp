@@ -109,7 +109,7 @@ class myFunctorClass
         int _x;
 };
  
-int main()
+int main_4()
 {
     myFunctorClass addFive( 5 );
     std::cout << addFive( 6 ) << endl;
@@ -118,7 +118,38 @@ int main()
 }
 
 
+#include <bits/stdc++.h>
+using namespace std;
+  
+/* unary function */
+int increment1(int &x) {x++;}
 
+class increment
+{
+public:
+    increment(int n): num(n) {}
+    
+    int operator () (int x)
+    {
+        num += x;
+    }
+private:
+    int num;
+};
+  
+int main()
+{
+    int arr[] = {1, 2, 3, 4, 5};
+    int n = sizeof(arr)/sizeof(arr[0]);
+  
+    for_each(arr, arr+n, increment(3));
+  
+    for (int i=0; i<n; i++)
+        cout << arr[i] << " ";
+    cout << endl;
+  
+    return 0;
+}
 
 
 
