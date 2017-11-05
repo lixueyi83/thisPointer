@@ -119,7 +119,7 @@ int main_4()
 }
 
 
-/*
+/***************************************************************************************
 *   Join and Detach a thread 
 *   Before calling join() or detach() we should check if thread is join-able every time.
 *   if(threadObj.joinable()) { "join or detach the thread" }
@@ -152,7 +152,7 @@ int main_5()
     return 0;
 }
 
-/*
+/****************************************************************************************
 *   RAII
 *   we should not forget call either join() or detach() in case of exceptions. 
 *   To prevents with we should use RESOURCE ACQUISITION IS INITIALIZATION (RAII) i.e.
@@ -183,7 +183,7 @@ void thread_func()
         std::cout<<"thread_function Executing"<<std::endl;
 }
  
-int main()  
+int main_6()  
 {
     std::thread threadObj(thread_func);
 
@@ -191,6 +191,78 @@ int main()
     ThreadRAII wrapperObj(threadObj);
     return 0;
 }
+
+
+
+/****************************************************************************************
+*   Pass Arguments to Threads
+*   1. To Pass arguments to thread’s associated callable object or function just passadditional 
+*   arguments to the std::thread constructor.
+*   2. By default all arguments are copied into the internal storage of new thread.
+*   3. Don’t pass addresses of variables from local stack to thread’s callback function. 
+*   4. Similarly be careful while passing pointer to memory located on heap to thread.
+*/
+
+/*   
+*   Pass reference to thread's associated callable object with std:ref().
+*/
+void threadCallback(int const & x)
+{
+    int & y = const_cast<int &>(x);
+    y++;
+    std::cout<<"Inside Thread x = "<<x<<std::endl;
+}
+int main_7()
+{
+    int x = 9;
+    std::cout<<"In Main Thread : Before Thread Start x = "<<x<<std::endl;
+    //std::thread threadObj(threadCallback, x); /* x in the thread function threadCallback is reference to the temporary value copied at the new thread’s stack */
+    std::thread threadObj(threadCallback, ref(x));
+    threadObj.join();
+    std::cout<<"In Main Thread : After Thread Joins x = "<<x<<std::endl;
+    return 0;
+}
+
+
+/*
+*   Pass argument to member function of a class as thread function. 
+*/
+class DummyClass 
+{
+public:
+    DummyClass()
+    {}
+    DummyClass(const DummyClass & obj)
+    {}
+    void sampleMemberFunction(int x)
+    {
+        std::cout<<"Inside sampleMemberFunction "<<x++<<std::endl;
+    }
+    void sampleMemberFunctionRef(int &x)
+    {
+        std::cout<<"Inside sampleMemberFunction "<<x++<<std::endl;
+    }
+};
+int main() 
+{ 
+    DummyClass dummyObj;
+    int x = 10, y = 10;
+    std::thread threadObj1(&DummyClass::sampleMemberFunction,&dummyObj, x);
+    std::thread threadObj2(&DummyClass::sampleMemberFunctionRef,&dummyObj, ref(y));
+    threadObj1.join();
+    threadObj2.join();
+    
+    cout << "x = " << x << ", y = " << y << endl;
+    return 0;
+}
+
+
+
+
+
+
+
+
 
 
 #include <bits/stdc++.h>
