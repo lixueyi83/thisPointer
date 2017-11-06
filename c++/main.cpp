@@ -258,7 +258,8 @@ int main_8()
 }
 
 
-/*  Data Sharing and Race Conditions: Lock Mechanism
+/*******************************************************************************************  
+*   Data Sharing and Race Conditions: Lock Mechanism
 *   
 *   1. std::lock_guard :std::lock_guard is a class template, which implements the RAII for mutex.
 *       It wraps the mutex inside it’s object and locks the attached mutex in its constructor. 
@@ -291,12 +292,87 @@ public:
     }
  };
  
- int main()
+ int main_9()
  {
     return 0;
  }
 
+/*******************************************************************************************  
+*   Need of Event Handling: http://thispointer.com/c11-multithreading-part-6-need-of-event-handling/ 
+*   >>>> Conditional Variables is the solution. #include <condition_variable>
+*        A mutex is required along with condition variable.
+*   
+*   1. Make a Boolean global variable with default value false. Set its value to true in Thread 2 
+*   and Thread 1 will keep on checking its value in loop and as soon as it becomes true Thread 1 
+*   will continue with processing of data. But as it’s a global variable shared by both of the 
+*   Threads it needs synchronization with mutex. 
+*   This mechanism has following disadvantages: 
+*   Thread will keep on acquiring the lock and release it just to check the value, therefore it 
+*   will consume CPU cycles and will also make Thread 1 slow, because it needs to acquire same 
+*   lock to update the bool flag.
+*   2. We can achieve this using Condition Variables.
+*   Condition Variable is a kind Event used for signaling between 2 threads. One thread can wait
+*   for it to get signaled, while other thread can signal this.
+*   >>> Main member functions for condition variable are wait(), notify_one() and notify_all().
+*/
 
+#include <thread>
+#include <functional>
+#include <mutex>
+#include <condition_variable>
+using namespace std::placeholders;
+
+class Application
+{
+  std::mutex m_mutex;
+  std::condition_variable m_condVar;
+  bool m_bDataLoaded;
+  
+public:
+  Application()
+  {
+    m_bDataLoaded = false;
+  }
+  void loadData()
+  {
+   // Make This Thread sleep for 1 Second
+   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+   std::cout<<"Loading Data from XML"<<std::endl;
+   // Lock The Data structure
+   std::lock_guard<std::mutex> guard(m_mutex);
+   // Set the flag to true, means data is loaded
+   m_bDataLoaded = true;
+   // Notify the condition variable
+   m_condVar.notify_one();
+  }
+  bool isDataLoaded()
+  {
+    return m_bDataLoaded;
+  }
+  void mainTask()
+  {
+    std::cout<<"Do Some Handshaking"<<std::endl;
+    // Acquire the lock
+    std::unique_lock<std::mutex> mlock(m_mutex);
+    // Start waiting for the Condition Variable to get signaled
+    // Wait() will internally release the lock and make the thread to block
+    // As soon as condition variable get signaled, resume the thread and
+    // again acquire the lock. Then check if condition is met or not
+    // If condition is met then continue else again go in wait.
+    m_condVar.wait(mlock, std::bind(&Application::isDataLoaded, this));
+    std::cout<<"Do Processing On loaded Data"<<std::endl;
+  }
+};
+
+int main()
+{
+   Application app;
+   std::thread thread_1(&Application::mainTask, &app);
+   std::thread thread_2(&Application::loadData, &app);
+   thread_2.join();
+   thread_1.join();
+   return 0;
+}
 
 
 
