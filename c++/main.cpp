@@ -364,7 +364,7 @@ public:
   }
 };
 
-int main()
+int main_10()
 {
    Application app;
    std::thread thread_1(&Application::mainTask, &app);
@@ -373,6 +373,131 @@ int main()
    thread_1.join();
    return 0;
 }
+
+
+/*******************************************************************************************  
+*   std::future , std::promise and Returning values from Thread                
+*   http://thispointer.com/c11-multithreading-part-8-stdfuture-stdpromise-and-returning-values-from-thread/
+*   1. How thread can return 3 different values at different point of time? >>> std::future.
+*   2. std::future is a class template and its object stores the future value.
+*   3. std::promise is also a class template and its object promises to set the value in future.
+*   4. A std::promise object shares data with its associated std::future object.
+*   5. Every std::promise object has an associated std::future object, through which others can fetch the value set by promise.
+*/
+#include <iostream>
+#include <thread>
+#include <future>
+ 
+/* practice 1 */
+void initiazer(std::promise<int> *promObj)
+{
+    std::cout<<"Inside Thread"<<std::endl;     
+    promObj->set_value(35);
+}
+ 
+/*
+*   If you want your thread to return multiple values at different point of time then just pass multiple 
+*   std::promise objects in thread and fetch multiple return values from thier associated multiple std::future objects.
+*/
+int main_11()
+{
+    /*1. create a promise object: As of now this promise object doesn’t have any associated value.
+    *   But it gives a promise that somebody will surely set the value in it and once its set then
+    *   you can get that value through associated std::future object.
+    */
+    std::promise<int> promiseObj;
+    
+    /*2. associate promise object to future object */
+    std::future<int> futureObj = promiseObj.get_future();
+    
+    /* 3. assign promise object to thread function */
+    std::thread th(initiazer, &promiseObj);
+    
+    /* 4. get future value set in promise object, it will block until the value is set */
+    std::cout<<futureObj.get()<<std::endl;
+    th.join();
+    return 0;
+}
+
+/* practice 2 */
+void print_int(std::future<int>& fut) 
+{
+    int x = fut.get();  /* block until the value is set or available */
+    std::cout << "value: " << x << '\n'; 
+}
+
+int main_12()
+{
+    /* 1. create promise obj */
+    std::promise<int> prom; 
+    
+    /* 2. associate promise obj to future obj */
+    std::future<int> fut = prom.get_future(); 
+    
+    /* 3. assign future obj to thread function */
+    std::thread t(print_int, std::ref(fut)); 
+    
+    /* 4. set future value in promise obj */
+    prom.set_value(10); 
+    
+    t.join();
+    return 0;
+}
+
+/* practice 3 */
+std::promise<int> prom;
+
+void print_global_promise () 
+{
+    std::future<int> fut = prom.get_future();
+    int x = fut.get();
+    std::cout << "value: " << x << '\n';
+}
+
+int main_13()
+{
+    std::thread th1(print_global_promise);
+    prom.set_value(10);
+    th1.join();
+
+    prom = std::promise<int>();    // prom 被move赋值为一个新的 promise 对象.
+
+    std::thread th2 (print_global_promise);
+    prom.set_value (20);
+    th2.join();
+
+  return 0;
+}
+
+/*******************************************************************************************  
+*   std::async 
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
