@@ -471,9 +471,105 @@ int main_13()
 
 /*******************************************************************************************  
 *   std::async 
+*   http://thispointer.com/c11-multithreading-part-9-stdasync-tutorial-example/
+*   
+*   emplate <class Fn, class... Args>
+*   future<typename result_of<Fn(Args...)>::type> async(launch policy,
+*                                                       Fn&& fn, 
+*                                                       Args&&... args);
+*   
+*   1. std::async() is a function template that accepts a callback(i.e. function or
+*   function object) as an argument and potentially executes them asynchronously.
+*   
+*   2. std::async returns a std::future<T>, that stores the value returned by function 
+*   object executed by std::async(). Arguments expected by function can be passed to 
+*   std::async() as arguments after the function pointer argument.
+*   
+*   3. First argument in std::async is launch policy,
+*       - std::launch::async
+*       - std::launch::deferred
+*       - std::launch::async | std::launch::deferred (by default)
+*
+*   4. We can pass any callback in std::async i.e.
+*       - Function Pointer
+*       - Function Object
+*       - Lambda Function
 */
 
+using namespace std::chrono;
+ 
+std::string fetchDataFromDB(std::string recvdData)
+{
+	// Make sure that function takes 5 seconds to complete
+	std::this_thread::sleep_for(seconds(5));
+ 
+	//Do stuff like creating DB Connection and fetching Data
+	return "DB_" + recvdData;
+}
+ 
+std::string fetchDataFromFile(std::string recvdData)
+{
+	// Make sure that function takes 5 seconds to complete
+	std::this_thread::sleep_for(seconds(5));
+ 
+	//Do stuff like fetching Data File
+	return "File_" + recvdData;
+}
+ 
+int main_14()
+{
+	// Get Start Time
+	system_clock::time_point start = system_clock::now();
+ 
+	//Fetch Data from DB
+	std::string dbData = fetchDataFromDB("Data");
+ 
+	//Fetch Data from File
+	std::string fileData = fetchDataFromFile("Data");
+ 
+	// Get End Time
+	auto end = system_clock::now();
+ 
+	auto diff = duration_cast < std::chrono::seconds > (end - start).count();
+	std::cout << "Total Time Taken = " << diff << " Seconds" << std::endl;
+ 
+	//Combine The Data
+	std::string data = dbData + " :: " + fileData;
+ 
+	//Printing the combined Data
+	std::cout << "Data = " << data << std::endl;
+ 
+	return 0;
+}
 
+int main()
+{
+	// Get Start Time
+	system_clock::time_point start = system_clock::now();
+ 
+	std::future<std::string> resultFromDB = std::async(std::launch::async, fetchDataFromDB, "Data");
+ 
+	//Fetch Data from File
+	std::string fileData = fetchDataFromFile("Data");
+ 
+	//Fetch Data from DB
+	// Will block till data is available in future<std::string> object.
+	std::string dbData = resultFromDB.get();
+ 
+	// Get End Time
+	auto end = system_clock::now();
+ 
+	auto diff = duration_cast < std::chrono::seconds > (end - start).count();
+	std::cout << "Total Time Taken = " << diff << " Seconds" << std::endl;
+ 
+	//Combine The Data
+	std::string data = dbData + " :: " + fileData;
+ 
+	//Printing the combined Data
+	std::cout << "Data = " << data << std::endl;
+ 
+	return 0;
+}
 
 
 
