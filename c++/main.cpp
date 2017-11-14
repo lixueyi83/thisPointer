@@ -211,10 +211,40 @@ int main()
         Push_back(): 5354.70 us
     */
     vector<BigTestStruct> destVec, srcVector;
-    destVec = srcVector;
-    destVec.insert(destVec.end(), srcVector.begin(), srcVector.end());
-    for(unsigned i = 0; i < srcVector.size(); ++i)
-        destVec.push_back(srcVector[i]);
+    FillVector(srcVector);
+    
+    /* copy */
+    MEAS_FUNC(destVec = srcVector);
+    
+    /* insert */
+    MEAS_FUNC(destVec.insert(destVec.end(), srcVector.begin(), srcVector.end()));
+    
+    /* push_back */
+    MEAS_FUNC(for(unsigned i = 0; i < srcVector.size(); ++i)
+        destVec.push_back(srcVector[i]);)
+        
+    /*******************************************************************
+        #4 While iterating through elements in a std::vector, avoid the 
+        std::vector::at() function. Instead, use iterator: it->item, or 
+        access by index vector[index]
+    */
+    
+    /*******************************************************************
+        #5 Try to avoid inserting an element in front of the vector.
+        Any insert at the front of a vector is an O(n) operation. Inserting at the front 
+        is inefficient because every item in the vector must be copied to make room for 
+        the new entry. If you need to continually insert at the beginning of the vector, 
+        you should probably re-evaluate your overall design.
+        
+    */
+    
+    /*******************************************************************
+        #6 Prefer emplace_back() instead of push_back() while inserting into a vector.
+        Almost everyone who jumped onto the C++11 bandwagon unequivocally agrees that 
+        emplacement is favorable to insertion for STL containers. Theoretically, 
+        emplacement is supposed to be at least as efficient as insertion. However, 
+        for all practical purposes , sometimes the difference in performance is negligible.
+    */
     
 }
 

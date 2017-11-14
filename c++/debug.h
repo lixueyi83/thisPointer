@@ -123,17 +123,19 @@ do{											\
     printf("\t *** Runtime of %s:  %.12f\n", #func, timediff);					\
 }
 
-/*Test Runtime of Function in millisecond(ms)*/
 #define MEA_PRE()	\
-	timedif = 0;	\
-	gettimeofday(&tstart, NULL);
+{                   \
+    struct timespec ss;						\
+    struct timespec ee;						\
+    clock_gettime(CLOCK_MONOTONIC, &ss);	
 
 #define MEA_POST()	\
-	gettimeofday(&tend,NULL);	\
-	timedif = (tend.tv_sec - tstart.tv_sec) + (tend.tv_usec - tstart.tv_usec) / 1000000.0;	\
-	printf("****** i2c read runtime is %.12f\n",timedif);
+    clock_gettime(CLOCK_MONOTONIC, &ee);	\
+    double timediff = (ee.tv_sec-ss.tv_sec)+(ee.tv_nsec-ss.tv_nsec)/1000000000.0;	\
+    printf("\t *** Runtime:  %.12f\n", timediff);   \
+}
 		
-#define MEA_FUNC(func_call)	\
+#define MEAS_FUNC(func_call)	\
 	MEA_PRE();		\
 	func_call;		\
 	MEA_POST();
