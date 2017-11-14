@@ -1,5 +1,5 @@
 /*************************************************************************
-	> File Name: stl_deque.cpp
+	> File Name: stl_set.cpp
 	> Author: 
 	> Mail: 
 	> Created Time: Wed 18 Oct 2017 02:20:18 PM PDT
@@ -7,6 +7,7 @@
 #include <iostream>
 #include <vector>
 #include <deque>
+#include <set>
 #include <thread>
 #include <mutex>
 #include <algorithm>
@@ -18,60 +19,108 @@
 
 using namespace std;
 
-/*******************************************************************
-Differences between vector and deque STL Containers.
-
-    Vector provides insertion and deletion at middle and end only. Whereas, deque provides operations for insertion at front, middle and end. That is, apart from push_back() and pop_back() APIs jus like vector, deque also has push_front() and pop_front() API to add and delete elements from front.
-    Vector provides good performance while insertion and deletion at end only and bad performance for insertion and deletion at middle.
-    Deque provides same kind of performance as vector for insertion & deletion at end and middle. Apart from that deque provides good performance for insertion and deletion at front also.
-    As Vector stores elements contiguously, where as deque internally contains a list of memory chunks which store elements contiguously. Due this basic architectural difference between vector and deque following things happen,
-    Performance of addition and deletion at end for vector is better than deque.
-    No Iterator invalidation happens in deque for insertion and deletion at front and end because like vectors, deque doesn’t have to shift elements from one memory to another in case current allocated memory is not sufficient to store the newly added element.
-
-    Iterator invalidation happens in deque just like vector, if insertion or deletion takes place in the middle.
-    Just like vector, deque also supports random access operations i.e. operator [] and at() function. Although performance of random access in deque will be little slower than vector.
-
-When to choose deque over vector:
-    One should choose deque over vector if he wants to either add or delete from both the ends like implementing a Queue.
-When to choose vector over deque:
-    One should choose vector if insertion or deletions are required mostly in end like implementing a Stack.
+/***********************************************************************
+    Benefits and Features of std::set:
+    1. It’s doesn’t allow duplicate elements i.e. it only contains unique elements.
+    2. std::set can contain element of any specified type in template argument i.e.
+    3. std::set internally store elements in balanced binary tree.
+    4. By default std::set uses the operator < for comparator 
+    5. std::set will keep the inserted elements in sorted order based on the comparator
+    
+Notice:
+    But you cannot modify the elements using iterators because if you modify the element 
+    value then internal data structure of std::set will get corrupt and it will not remain 
+    balanced binary search tree. Hence further additions and find operations will not work properly.
+    
+    It internally maintains a binary balanced tree and during insertion it compares the new 
+    element with already present nodes and finds the right position of new element in tree. 
+    If that element is already present then it doesn’t insert the new element.
 */
 
-int main()
+int main_insert_find()
 {
-    std::deque<int> dequeObj;
+	std::set<std::string> setOfNumbers;
  
-    dequeObj.push_back(5);
-    dequeObj.push_back(6);
+	/* Lets insert four elements */
+	setOfNumbers.insert("first");
+	setOfNumbers.insert("second");
+	setOfNumbers.insert("third");
+	setOfNumbers.insert("first");
+	setOfNumbers.insert("aaaaa");
+	setOfNumbers.insert("ddddd");
+	setOfNumbers.insert("ccccc");
  
-    for(int i = 0; i< dequeObj.size(); i++)
-        std::cout<<dequeObj[i]<<" ";
-    std::cout<<std::endl;
+	/* Only 3 elements will be inserted */
+	std::cout<<"Set Size = "<<setOfNumbers.size()<<std::endl;
  
-    dequeObj.push_front(4);
-    dequeObj.push_front(3);
+	/* Iterate through all the elements in a set and display the value. */
+	for (std::set<std::string>::iterator it=setOfNumbers.begin(); it!=setOfNumbers.end(); ++it)
+	    std::cout << *it << endl;
+	    
+	/* To search an element, use std::set::find member method and check iterator. 
+	Why std::set::find member method instead of std::find standard generic algorithm?
+	Because find member function knows its internal data structure is balance binary search 
+	tree and hence designed to operate on that only therefore it will take much lesser time 
+	then standard algorithm std::find.*/
+    std::set<std::string>::iterator it = setOfNumbers.find("second");
+	if(it != setOfNumbers.end())
+		std::cout<<"'second'  found"<<std::endl;
+	else
+		std::cout<<"'second' not found"<<std::endl;
+		
+	return 0;
+}
+
+std::set<int> setOfNumbers;
+void checkAndInsert(int num)
+{
+  if(setOfNumbers.insert(num).second)
+     std::cout<<"Number "<<num<<" inserted sucessfuly\n";
+ else
+     std::cout<<"Number "<<num<<" was already present in set\n";
  
-    for(int i = 0; i< dequeObj.size(); i++)
-            std::cout<<dequeObj[i]<<" ";
-    std::cout<<std::endl;
+}
+int main_verify_insertion()
+{
+    checkAndInsert(2);
+    checkAndInsert(3);
+    checkAndInsert(2);
+    checkAndInsert(1);
  
-    dequeObj.pop_back();
+   /* Check the size of set */
+   std::cout<< "set size: " << setOfNumbers.size()<<std::endl;
  
-    for(int i = 0; i< dequeObj.size(); i++)
-            std::cout<<dequeObj[i]<<" ";
-    std::cout<<std::endl;
- 
-    dequeObj.pop_front();
- 
-    for(int i = 0; i< dequeObj.size(); i++)
-                std::cout<<dequeObj[i]<<" ";
-    std::cout<<std::endl;
-    return 0;
+   /* Iterate through all the elements in a set and display the value. */
+   for (std::set<int>::iterator it=setOfNumbers.begin(); it!=setOfNumbers.end(); ++it)
+      std::cout << *it << endl;
+   std::cout<<"\n";
+ return 0;
 }
 
 
-
-
-
-
+int main()
+{
+ 
+	std::set<std::string> setOfNumbers;
+ 
+	/* Lets insert four elements */
+	setOfNumbers.insert("first");
+	setOfNumbers.insert("second");
+	setOfNumbers.insert("third");
+	setOfNumbers.insert("first");
+ 
+	/* Iterate through all the elements in a set and display the value. */
+	for (std::set<std::string>::iterator it=setOfNumbers.begin(); it!=setOfNumbers.end(); ++it)
+	    std::cout << ' ' << *it;
+	std::cout<<std::endl;
+ 
+	setOfNumbers.erase("third");
+ 
+	/* Iterate through all the elements in a set and display the value. */
+	for (std::set<std::string>::iterator it=setOfNumbers.begin(); it!=setOfNumbers.end(); ++it)
+		    std::cout << ' ' << *it;
+ 
+	std::cout<<std::endl;
+	return 0;
+}
 
