@@ -120,7 +120,7 @@ do{											\
     func(arg);								\
     clock_gettime(CLOCK_MONOTONIC, &ee);	\
     double timediff = (ee.tv_sec-ss.tv_sec)+(ee.tv_nsec-ss.tv_nsec)/1000000000.0;	\
-    printf("\t *** Runtime of %s:  %.12f\n", #func, timediff);					\
+    printf("\t*** Runtime of %s: %.12f\n", #func, timediff);					\
 }
 
 #define MEA_PRE()	\
@@ -132,7 +132,7 @@ do{											\
 #define MEA_POST()	\
     clock_gettime(CLOCK_MONOTONIC, &ee);	\
     double timediff = (ee.tv_sec-ss.tv_sec)+(ee.tv_nsec-ss.tv_nsec)/1000000000.0;	\
-    printf("\t *** Runtime:  %.12f\n", timediff);   \
+    printf("\t*** Runtime: %.12f\n", timediff);   \
 }
 		
 #define MEAS_FUNC(func_call)	\
