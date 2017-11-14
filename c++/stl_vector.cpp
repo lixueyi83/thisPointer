@@ -342,6 +342,16 @@ int Item::m_ConstructorCalledCount = 0;
 int Item::m_CopyConstructorCalledCount = 0;
 int Item::m_DestCalledCount = 0;
  
+
+/*
+    Inside the for loop we created 10000 objects, so constructor is called 10000 times.
+    Then after creating every object we inserted the newly created object in vector 
+    10000 times, therefore copy constructor is called 10000 times and destructor of old 
+    10000 Item object is called.In last line of function, we returned the vector and all its content 
+    was copied to vecOfItems vector, so again 10000 times copy constructor is called and destructor 
+    of old 10000 Item object is called.
+*/
+ 
 class ItemFactory
 {
 public:
