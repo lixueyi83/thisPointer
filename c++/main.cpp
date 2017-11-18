@@ -292,18 +292,204 @@ void example2()
 	 }
 }
  
-int main()
+int main_map()
 {
 	example2();
 	return 0;
 }
 
+/*****************************************************************************************
+    How to Insert elements in a map
+    
+    Map internally store elements in a pair of key value i.e.
+        	
+        pair<iterator,bool> insert (const value_type& element);
+        
+    It accepts an object of key value pair and returns an pair of map iterator and bool.
+*/
+void testResult(std::pair<std::map<std::string, int>::iterator, bool> & result) 
+{
+	/* Check if Insertion was successful */
+	if(result.second == false) 
+	{
+		/* Insertion Failed */
+		std::cout << "Failed to add . duplicate key: " << result.first->first << std::endl;
+	} 
+	else 
+	{
+		/* Insertion was successful */
+		std::cout << "Successful in Adding key: " << result.first->first << std::endl;
+	}
+}
+ 
+int main_insert_element_into_map() 
+{
+	/* Map of string and int */
+	std::map<std::string, int> mapOfWordCount;
+ 
+	/* Pair of Map Iterator and bool */
+	std::pair<std::map<std::string, int>::iterator, bool> result;
+ 
+	/* Insert Element in map */
+	result = mapOfWordCount.insert(std::pair<std::string, int>("first", 1));
+	
+	testResult(result);
+ 
+	/* Insert Element in map */
+	result = mapOfWordCount.insert(std::pair<std::string, int>("second", 2));
 
+	testResult(result);
+ 
+	/* Insert Element in map */
+	result = mapOfWordCount.insert(std::pair<std::string, int>("third", 3));
 
+	testResult(result);
+ 
+	/* Try to add duplicate element */
+	result = mapOfWordCount.insert(std::pair<std::string, int>("third", 4));
 
+	testResult(result);
+ 
+	/* Create a map iterator and point to beginning of map */
+	std::map<std::string, int>::iterator it = mapOfWordCount.begin();
+ 
+	std::cout << "*****************************" << std::endl;
+	
+	/* Iterate over a map using std::for_each and Lambda function */
+	std::for_each(mapOfWordCount.begin(), mapOfWordCount.end(),
+			[](std::pair<std::string, int> element) 
+			{
+				/* Accessing KEY::VALUE from element */
+				std::string word = element.first;
+				int count = element.second;
+				std::cout<< word << " :: " << count << std::endl;
+			});
+ 
+	return 0;
+}
 
+/*****************************************************************************************
+    How to Iterate over a map in C++
+    
+    1. Iterate over a map using STL Iterator
+    2. Iterating over the map using C++11 range based for loop
+    3. Iterating over the map using std::for_each and lambda function
+    
+    Reverse Iterate: 
+    To Iterate a map in reverse order we will use reverse_iterator of map i.e.
+    Reverse Iterator of map moves in backward direction on increment. So, we will point the 
+    reverse_iterator to the last element of map and then keep on incrementing it until it 
+    reaches the first element. To do this we will use 2 member functions of std::map i.e.
+    
+    std::map::rbegin() returns the reverse_iterator pointing to last element of map.
+    std::map::rend() returns the reverse_iterator pointing to first element of map.
+*/
 
+int main_interate_1() 
+{ 
+	std::map<std::string, int> mapOfWordCount;
+	/* Insert Element in map, if already exist then insert fails */
+	mapOfWordCount.insert(std::pair<std::string, int>("first", 1));
+	mapOfWordCount.insert(std::pair<std::string, int>("second", 2));
+	mapOfWordCount.insert(std::pair<std::string, int>("third", 3));
+	mapOfWordCount.insert(std::pair<std::string, int>("third", 4));
+	mapOfWordCount.insert(std::pair<std::string, int>("third", 5));
+ 
+	/* Create a map iterator and point to beginning of map */
+	std::map<std::string, int>::iterator it = mapOfWordCount.begin();
+ 
+	/* Iterate over the map using Iterator till end. */
+	while (it != mapOfWordCount.end())
+	{
+		/* Accessing KEY::VALUE from element pointed by it. */
+		std::string word = it->first;
+		int count = it->second;
+		std::cout << word << " :: " << count << std::endl;
+ 
+		/* Increment the Iterator to point to next entry */
+		it++;
+	}
+	return 0;
+}
 
+int main_interate_2() 
+{
+	std::map<std::string, int> mapOfWordCount;
+	/* Insert Element in map */
+	mapOfWordCount.insert(std::pair<std::string, int>("first", 1));
+	mapOfWordCount.insert(std::pair<std::string, int>("second", 2));
+	mapOfWordCount.insert(std::pair<std::string, int>("third", 3));
+	mapOfWordCount.insert(std::pair<std::string, int>("third", 4));
+	mapOfWordCount.insert(std::pair<std::string, int>("third", 5));
+ 
+	/* Create a map iterator and point to beginning of map */
+	std::map<std::string, int>::iterator it = mapOfWordCount.begin();
+ 
+	// Iterate over the map using c++11 range based for loop
+	for (std::pair<std::string, int> element : mapOfWordCount) 
+	{
+		// Accessing KEY::VALUE from element
+		std::string word = element.first;
+		int count = element.second;
+		std::cout << word << " :: " << count << std::endl;
+	}
+ 
+	return 0;
+}
+
+int main_interate_3() 
+{ 
+	std::map<std::string, int> mapOfWordCount;
+	/* Insert Element in map */
+	mapOfWordCount.insert(std::pair<std::string, int>("first", 1));
+	mapOfWordCount.insert(std::pair<std::string, int>("second", 2));
+	mapOfWordCount.insert(std::pair<std::string, int>("third", 3));
+	mapOfWordCount.insert(std::pair<std::string, int>("third", 4));
+	mapOfWordCount.insert(std::pair<std::string, int>("third", 5));
+ 
+	/* Create a map iterator and point to beginning of map */
+	std::map<std::string, int>::iterator it = mapOfWordCount.begin();
+ 
+	/* Iterate over a map using std::for_each and Lambda function */
+		std::for_each(mapOfWordCount.begin(), mapOfWordCount.end(),
+				[](std::pair<std::string, int> element){
+					// Accessing KEY::VALUE from element
+					std::string word = element.first;
+					int count = element.second;
+					std::cout<<word<<" :: "<<count<<std::endl;
+		});
+ 
+	return 0;
+}
+
+int main_reverse_iterate() 
+{
+	/* Creating & Initializing a map of String & Ints */
+	std::map<std::string, int> mapOfWordCount = 
+	{
+			{ "aaa", 10 },
+			{ "ddd", 11 },
+			{ "bbb", 12 },
+			{ "ccc", 13 }
+	};
+ 
+	/* Create a map iterator and point to the end of map */
+	std::map<std::string, int>::reverse_iterator it = mapOfWordCount.rbegin();
+ 
+	/* Iterate over the map using Iterator till beginning. */
+	while (it != mapOfWordCount.rend()) 
+	{
+		/* Accessing KEY::VALUE from element pointed by it. */
+		std::string word = it->first;
+		int count = it->second;
+		std::cout << word << " :: " << count << std::endl;
+ 
+		/* Increment the Iterator to point to next entry */
+		it++;
+	}
+ 
+	return 0;
+}
 
 
 
