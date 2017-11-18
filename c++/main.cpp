@@ -106,7 +106,7 @@ struct WordGreaterComparator
     }
 };
  
-int main()
+int main_external_sort_criteria()
 {
     std::cout<<"Default sorting criteria for keys i.e. operator < for std::string: "<<std::endl;
     std::map<std::string, int > mapOfWords;
@@ -137,10 +137,166 @@ int main()
     return 0;
 }
 
+/*************************************************************************
+    Using User defined class objects as keys in std::map
+    
+    By default std::map uses “operator <” as sorting criteria for keys. For default data types 
+    like int and std::string etc, operator < is available by default but for User defined classes 
+    operator < is not available by default. Therefore, to use user defined class objects as keys 
+    in std::map we should have either,
+        1. Default sorting criteria i.e. operator < defined for our Class.
+        2. std::map should be assigned with an external sorting criteria i.e. comparator that can 
+           compare two objects of your user defined class.
+*/
 
+class User
+{
+	std::string m_id;
+	std::string m_name;
+public:
+	User(std::string name, std::string id) :
+			m_id(id), m_name(name)
+	{
+	}
+	const std::string& getId() const
+	{
+		return m_id;
+	}
+	const std::string& getName() const
+	{
+		return m_name;
+	}
+	bool operator<(const User& userObj) const
+	{
+		if (this->m_id < userObj.m_id)
+			return true;
+	}
+};
+ 
+void example_1()
+{
+	std::map<User, int> m_UserInfoMap;
+ 
+	m_UserInfoMap.insert(std::make_pair<User, int>(User("Mr.X", "3"), 100));
+	m_UserInfoMap.insert(std::make_pair<User, int>(User("Mr.X", "1"), 120));
+	m_UserInfoMap.insert(std::make_pair<User, int>(User("Mr.Z", "2"), 300));
+ 
+	std::map<User, int>::iterator it = m_UserInfoMap.begin();
+	for (; it != m_UserInfoMap.end(); it++)
+	{
+		std::cout << it->first.getId() << ": " << it->first.getName() << " :: " << it->second << std::endl;
+	}
+}
+struct UserNameComparator
+{
+	bool operator()(const User &left, const User &right) const
+	{
+		return (left.getName() > right.getName());
+	}
+};
+ 
+void example_2()
+{
+	std::map<User, int, UserNameComparator> m_UserInfoMap;
+ 
+	m_UserInfoMap.insert(std::make_pair<User, int>(User("Mr.X", "3"), 100));
+	m_UserInfoMap.insert(std::make_pair<User, int>(User("Mr.X", "1"), 120));
+	m_UserInfoMap.insert(std::make_pair<User, int>(User("Mr.Z", "2"), 300));
+	m_UserInfoMap.insert(std::make_pair<User, int>(User("Mr.Y", "2"), 300));
+ 
+	std::map<User, int, UserNameComparator>::iterator it =
+			m_UserInfoMap.begin();
+	for (; it != m_UserInfoMap.end(); it++)
+	{
+		std::cout << it->first.getName() << " :: " << it->second << std::endl;
+	}
+}
+int main_use_defined_class()
+{
+	std::cout << "EXAMPLE 1 :: Comparing by ID" << std::endl;
+	example_1();
+	std::cout << "EXAMPLE 1 :: Comparing by NAME" << std::endl;
+	example_2();
+	return 0;
+}
 
+/*******************************************************************************
+    Set vs Map : How to choose a right associative container ?
+    
+    Set:
+        1. Set is an associative container which we need to store unique elements.
+        2. It always keeps the elements in sorted order.
+        3. Internally it maintains a balanced binary search tree of elements. Therefore when we search 
+           an element inside the set then it takes only log(n) complexity to search it.
+        4. Each element added inside the set is const i.e. you cannot modify that element, because if 
+           you could, then it would hamper set’s internal data structure i.e. it will lose its internal 
+           balanced binary search tree property and results in undefined behavior.
+           
+    Map:
+        1. Map is a associative container that is used to store key-value pair of elements with unique keys.
+        2. It always keeps the inserted pairs in sorted order based on the key.
+        3. Internally it maintains a balanced binary search tree to store keys. (log(n) for searching)
+        4. We cannot modify the key of any inserted pair in map.
+        5. We can modify the value associated with a key in any inserted pair in map.
+*/
 
+void example1()
+{
+	std::set<std::string> setOfDepartments;
+ 
+	setOfDepartments.insert("First");
+	setOfDepartments.insert("Second");
+	setOfDepartments.insert("Third");
+	
+	std::for_each(setOfDepartments.begin(), 
+	              setOfDepartments.end(), 
+	              [](std::string elem){ std::cout << (elem) << " , "; });
+ 
+	/* Now Try to change the element */
+	 std::set<std::string>::iterator it = setOfDepartments.find("Second");
+	 if(it != setOfDepartments.end())
+	 {
+		 std::cout << std::endl<< *it;
+		 //*it = "Fourth"; // NOT ALLOWED
+	 }
+	 cout << endl;
+ 
+}
+int main_set()
+{
+	example1();
+	return 0;
+}
 
+void example2()
+{
+	/* Map of Department and Employee count in that Department */
+	std::map<std::string, int > mapOfDepEmpCount;
+ 
+	mapOfDepEmpCount.insert(std::make_pair("First", 0));
+	mapOfDepEmpCount.insert(std::make_pair("Second", 0));
+	mapOfDepEmpCount.insert(std::make_pair("Third", 0));
+ 
+	std::map<std::string, int >::iterator it = mapOfDepEmpCount.find("Second");
+	 if(it != mapOfDepEmpCount.end())
+	 {
+		 std::cout << "Department = "<< it->first << " :: No. Of Employees = " << it->second << std::endl;
+		 it->second = 10;  /* You can change the value associated with the key */
+		 /* it->first = "sss"; You cannot chage the key */
+	 }
+ 
+	 it = mapOfDepEmpCount.find("Second");
+	 if(it != mapOfDepEmpCount.end())
+	 {
+		 std::cout << "Department = "<< it->first << " :: No. Of Employees = " << it->second << std::endl;
+	 }
+}
+ 
+int main()
+{
+	example2();
+	return 0;
+}
 
 
 
