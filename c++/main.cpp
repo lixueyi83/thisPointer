@@ -1,5 +1,5 @@
 /*************************************************************************
-	> File Name: stl_list.cpp
+	> File Name: stl_map.cpp
 	> Author: 
 	> Mail: 
 	> Created Time: Wed 18 Oct 2017 02:20:18 PM PDT
@@ -98,7 +98,44 @@ int main_basics()
     Map and External Sorting Criteria / Comparator
     
 */
-
+struct WordGreaterComparator
+{
+    bool operator()(const std::string & left, const std::string & right) const
+    {
+        return (left > right);
+    }
+};
+ 
+int main()
+{
+    std::cout<<"Default sorting criteria for keys i.e. operator < for std::string: "<<std::endl;
+    std::map<std::string, int > mapOfWords;
+ 
+    mapOfWords.insert(std::make_pair("earth", 1));
+    mapOfWords.insert(std::make_pair("moon", 2));
+    mapOfWords.insert(std::make_pair("sun", 3));
+ 
+    std::map<std::string, int>::iterator it = mapOfWords.begin();
+    for( ; it != mapOfWords.end(); it++)
+        std::cout<< "\t" << it->first << " :: " << it->second << std::endl;
+ 
+    std::cout<<"\nExternal sorting criteria for keys: "<<std::endl;
+    std::map<std::string, int, WordGreaterComparator > mapOfWords_2;
+ 
+    mapOfWords_2.insert(std::make_pair("earth", 1));
+    mapOfWords_2.insert(std::make_pair("moon", 2));
+    mapOfWords_2.insert(std::make_pair("sun", 3));
+    for(std::map<std::string, int>::iterator it = mapOfWords_2.begin(); it != mapOfWords_2.end(); it++)
+        std::cout<< "\t" << it->first << " :: " << it->second << std::endl;
+ 
+    /*
+         Compile Error as 2 std::map objects have different sorting criteria0
+    if(mapOfWords == mapOfWords_2)
+         std::cout<<"Maps are same"<<std::endl;
+    */
+ 
+    return 0;
+}
 
 
 
