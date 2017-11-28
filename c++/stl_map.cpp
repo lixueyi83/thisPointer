@@ -786,6 +786,8 @@ bool testBracket(string s)
  
         if(bracketMap.find(s[i]) != bracketMap.end())
         {
+            /* if close bracket found but there is no open bracket in stack, FALSE.
+                Then we don't have to iterate all the remain string.*/
             if(bracketStack.empty())
                 return false;
                 
@@ -806,9 +808,9 @@ bool testBracket(string s)
  
 int main()
 {
-  cout<<testBracket("([(2+11)]+)")<<endl;
+  cout<<testBracket("56([(2+11)]+)")<<endl;
   cout<<testBracket("([(2+11)]+){}")<<endl;
-  cout<<testBracket("({[(2+11)]+){}")<<endl;
+  cout<<testBracket("({[(2+11)]+){}}")<<endl;
   return 0;
 }
 
