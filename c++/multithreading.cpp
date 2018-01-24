@@ -81,7 +81,6 @@ int main_2()
 */
 int main_3()  
 {
-    int x = 9;
     std::thread threadObj([]()
         {
             for(int i = 0; i < 10; i++)
@@ -96,14 +95,15 @@ int main_3()
     return 0;
 }
 
-
+/* A Function Object / Functor is a kind of Callback with State. */
 class myFunctorClass
 {
     public:
         myFunctorClass (int x) : _x( x ) {}
         int operator() (int y) 
         { 
-            return _x + y; 
+            _x = _x + y;
+            return _x; 
             cout << "***********" << endl;
         }
         
@@ -115,6 +115,7 @@ int main_4()
 {
     myFunctorClass addFive( 5 );
     std::cout << addFive( 6 ) << endl;
+    std::cout << addFive( 5 ) << endl;
  
     return 0;
 }
@@ -164,11 +165,11 @@ class ThreadRAII
     public:
         ThreadRAII(std::thread  & threadObj) : m_thread(threadObj)
         {
-            cout << "ThreadRAII constructor " << endl;
+            //cout << "ThreadRAII constructor " << endl;
         }
         ~ThreadRAII()
         {
-            cout << "ThreadRAII destructor " << endl;
+            //cout << "ThreadRAII destructor " << endl;
             
             // Check if thread is joinable then detach the thread
             if(m_thread.joinable())
@@ -190,6 +191,10 @@ int main_6()
 
     // If we comment this Line, then program will crash
     ThreadRAII wrapperObj(threadObj);
+    
+    cout << "From main thread" << endl;
+    sleep(2);
+        
     return 0;
 }
 
@@ -231,29 +236,32 @@ int main_7()
 class DummyClass 
 {
 public:
-    DummyClass()
-    {}
-    DummyClass(const DummyClass & obj)
-    {}
+    DummyClass() {}
+    
+    DummyClass(const DummyClass & obj) {}
+    
     void sampleMemberFunction(int x)
     {
         std::cout<<"Inside sampleMemberFunction "<<x++<<std::endl;
     }
+    
     void sampleMemberFunctionRef(int &x)
     {
         std::cout<<"Inside sampleMemberFunction "<<x++<<std::endl;
     }
 };
+
 int main_8() 
 { 
     DummyClass dummyObj;
     int x = 10, y = 10;
+    
     std::thread threadObj1(&DummyClass::sampleMemberFunction,&dummyObj, x);
     std::thread threadObj2(&DummyClass::sampleMemberFunctionRef,&dummyObj, ref(y));
     threadObj1.join();
     threadObj2.join();
     
-    cout << "x = " << x << ", y = " << y << endl;
+    cout << "x = " << x << "\ny = " << y << endl;
     return 0;
 }
 
@@ -268,11 +276,13 @@ int main_8()
 */
 class Wallet
 {
-	int mMoney;
+private:
+	int m_money;
 	std::mutex mutex;
+	
 public:
-    Wallet() :mMoney(0){}
-    int getMoney()   { 	return mMoney; }
+    Wallet() : m_money(0) {}
+    int getMoney() {return m_money;}
     void addMoney(int money)
     {
 		std::lock_guard<std::mutex> lockGuard(mutex);
@@ -284,7 +294,7 @@ public:
 			// poin then destructor of lockGuard
 			// will be called due to stack unwinding.
 			//
-			mMoney++;
+			m_money++;
 		}
 		// Once function exits, then destructor
 		// of lockGuard Object will be called.
@@ -412,10 +422,14 @@ int main_11()
     
     /* 3. assign promise object to thread function */
     std::thread th(initiazer, &promiseObj);
+    //promiseObj.set_value(45);
     
     /* 4. get future value set in promise object, it will block until the value is set */
     std::cout<<futureObj.get()<<std::endl;
-    th.join();
+    
+    //th.join();
+    ThreadRAII wrapper(th);
+    
     return 0;
 }
 
@@ -437,6 +451,8 @@ int main_12()
     /* 3. assign future obj to thread function */
     std::thread t(print_int, std::ref(fut)); 
     
+    sleep(1);
+    
     /* 4. set future value in promise obj */
     prom.set_value(10); 
     
@@ -457,16 +473,23 @@ void print_global_promise ()
 int main_13()
 {
     std::thread th1(print_global_promise);
+    cout << "busing waiting 1..." << endl;
+    sleep(1);
     prom.set_value(10);
     th1.join();
 
     prom = std::promise<int>();    // prom 被move赋值为一个新的 promise 对象.
 
     std::thread th2 (print_global_promise);
+    cout << "busing waiting 2..." << endl;
+    sleep(1);
     prom.set_value (20);
     th2.join();
+    
+    ThreadRAII wrapper1(th1);
+    ThreadRAII wrapper2(th2);
 
-  return 0;
+    return 0;
 }
 
 /*******************************************************************************************  
@@ -496,12 +519,35 @@ int main_13()
 *       - Lambda Function
 */
 
+/*  https://eli.thegreenplace.net/2016/the-promises-and-challenges-of-stdasync-task-based-parallelism-in-c11/
+Conclusion and practical advice
+
+This article started by expounding the virtues of std::async compared to plain std::threads, 
+but finished by pointing out numerous problems with std::async that one needs to be aware of. 
+So, what do we do?
+
+I actually think that by being careful to stay within the well-defined limits of std::async, 
+we can enjoy its benefits without running into the gotchas. Specifically:
+
+    1. Prefer std::async to std::thread. Futures are just too useful to ignore; especially if 
+       your code deals with exception handling, this is the only sane way to stay safe. Results 
+       provided by different threads should be wrapped in futures.
+    
+    2. Always use the std::launch::async policy with std::async if you actually want multi-threading. 
+       Do not rely on the default policy. Do not use deferred unless you have very special needs. 
+       Remember that deferred is just syntactic sugar over holding a function pointer to call it later.
+    
+    3. If you need a real thread pool or some other higher-level concurrency construct, use a library 
+       or roll your own. Standard objects like std::future, std::promise and std::packaged_task can be 
+       very helpful.
+*/
+
 using namespace std::chrono;
  
 std::string fetchDataFromDB(std::string recvdData)
 {
 	// Make sure that function takes 5 seconds to complete
-	std::this_thread::sleep_for(seconds(5));
+	std::this_thread::sleep_for(seconds(1));
  
 	//Do stuff like creating DB Connection and fetching Data
 	return "DB_" + recvdData;
@@ -510,7 +556,7 @@ std::string fetchDataFromDB(std::string recvdData)
 std::string fetchDataFromFile(std::string recvdData)
 {
 	// Make sure that function takes 5 seconds to complete
-	std::this_thread::sleep_for(seconds(5));
+	std::this_thread::sleep_for(seconds(1));
  
 	//Do stuff like fetching Data File
 	return "File_" + recvdData;
@@ -542,7 +588,7 @@ int main_14()
 	return 0;
 }
 
-int main()
+int main_15()
 {
 	// Get Start Time
 	system_clock::time_point start = system_clock::now();
@@ -572,11 +618,96 @@ int main()
 }
 
 
+/*  http://thispointer.com/c11-multithreading-part-10-packaged_task-example-and-tutorial/
+*/
 
+std::string getDataFromDB( std::string token)
+{
+	std::string data = "Data fetched from DB by Filter :: " + token;
+	return data;
+}
+ 
+int main_16()
+{
+	/* Create a packaged_task<> that encapsulated the callback i.e. a function */
+	std::packaged_task<std::string (std::string)> task(getDataFromDB);
+ 
+	/* Fetch the associated future<> from packaged_task<> */
+	std::future<std::string> result = task.get_future();
+ 
+	/* Pass the packaged_task to thread to run asynchronously */
+	std::thread th(std::move(task), "Arg");
+ 
+	/* Join the thread. Its blocking and returns when thread is finished. */
+	th.join();
+ 
+	/* Fetch the result of packaged_task<> i.e. value returned by getDataFromDB() */
+	std::string data =  result.get();
+ 
+	std::cout <<  data << std::endl;
+ 
+	return 0;
+}
 
+int main_17()
+{
+	/* Create a packaged_task<> that encapsulated a lambda function */
+	std::packaged_task<std::string (std::string)> task([](std::string token)
+	{
+			std::string data = "Data From " + token;
+			return data;
+	});
+ 
+	/* Fetch the associated future<> from packaged_task<> */
+	std::future<std::string> result = task.get_future();
+ 
+	/* Pass the packaged_task to thread to run asynchronously */
+	std::thread th(std::move(task), "Arg");
+ 
+	/* Join the thread. Its blocking and returns when thread is finished. */
+	th.join();
+ 
+	/* Fetch the result of packaged_task<> i.e. value returned by getDataFromDB() */
+	std::string data =  result.get();
+ 
+	std::cout <<  data << std::endl;
+ 
+	return 0;
+}
 
-
-
+/*
+ * Function Object to Fetch Data from DB
+ */
+struct DBDataFetcher
+{
+	std::string operator()(std::string token)
+	{
+		std::string data = "Data From " + token;
+		return data;
+	}
+};
+ 
+int main()
+{
+	/* Create a packaged_task<> that encapsulated a lambda function */
+	std::packaged_task<std::string (std::string)> task(std::move(DBDataFetcher()));
+ 
+	/* Fetch the associated future<> from packaged_task<> */
+	std::future<std::string> result = task.get_future();
+ 
+	/* Pass the packaged_task to thread to run asynchronously */
+	std::thread th(std::move(task), "Arg");
+ 
+	/* Join the thread. Its blocking and returns when thread is finished. */
+	th.join();
+ 
+	/* Fetch the result of packaged_task<> i.e. value returned by getDataFromDB() */
+	std::string data =  result.get();
+ 
+	std::cout <<  data << std::endl;
+ 
+	return 0;
+}
 
 
 
@@ -601,7 +732,7 @@ int main()
 #include <bits/stdc++.h>
   
 /* unary function */
-int increment1(int &x) {x++;}
+int increment1(int &x) {x++; return x;}
 
 class increment
 {
@@ -611,6 +742,7 @@ public:
     int operator () (int x)
     {
         num += x;
+        return num;
     }
 private:
     int num;
