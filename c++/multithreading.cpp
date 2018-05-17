@@ -687,7 +687,7 @@ struct DBDataFetcher
 	}
 };
  
-int main()
+int main_18()
 {
 	/* Create a packaged_task<> that encapsulated a lambda function */
 	std::packaged_task<std::string (std::string)> task(std::move(DBDataFetcher()));
@@ -707,6 +707,53 @@ int main()
 	std::cout <<  data << std::endl;
  
 	return 0;
+}
+ 
+// unique function to avoid disambiguating the std::pow overload set
+int f(int x, int y) 
+{ 
+    return std::pow(x,y); 
+}
+ 
+void task_lambda()
+{
+    std::packaged_task<int(int,int)> task([](int a, int b) {
+        return std::pow(a, b); 
+    });
+    std::future<int> result = task.get_future();
+
+    task(2, 9);
+ 
+    std::cout << "task_lambda:\t" << result.get() << '\n';
+}
+ 
+void task_bind()
+{
+    std::packaged_task<int()> task(std::bind(f, 2, 11));
+    std::future<int> result = task.get_future();
+ 
+    task();
+ 
+    std::cout << "task_bind:\t" << result.get() << '\n';
+}
+ 
+void task_thread()
+{
+    std::packaged_task<int(int,int)> task(f);
+    std::future<int> result = task.get_future();
+ 
+    std::thread task_td(std::move(task), 2, 10);
+    task_td.join();
+ 
+    std::cout << "task_thread:\t" << result.get() << '\n';
+}
+ 
+int main_19()
+{
+    task_lambda();
+    task_bind();
+    task_thread();
+    return 0;
 }
 
 
@@ -732,7 +779,36 @@ int main()
 #include <bits/stdc++.h>
   
 /* unary function */
-int increment1(int &x) {x++; return x;}
+int increment1(int &x) 
+{
+    return ++x;
+}
+
+class incrementConst
+{
+private:
+    int num;
+public:
+    incrementConst(int n) : num(n) {}
+ 
+    // This operator overloading enables calling operator function () on objects of increment
+    int operator () (int x) const {
+        return num + x;
+    }
+};
+ 
+// Driver code
+int main_20()
+{
+    int arr[] = {1, 2, 3, 4, 5};
+    int n = sizeof(arr)/sizeof(arr[0]);
+    incrementConst incr(5);
+    for_each(arr, arr+n, [incr](int& x){x=incr(x);});
+    //transform(arr, arr+n, arr, increment(5));
+    for_each(arr, arr+n, [](int x){cout << x << " ";});
+    cout << endl;
+    return 0;
+}
 
 class increment
 {
@@ -741,22 +817,25 @@ public:
     
     int operator () (int x)
     {
-        num += x;
+        num *= x;
         return num;
     }
 private:
     int num;
 };
   
-int main_last()
+int main()
 {
     int arr[] = {1, 2, 3, 4, 5};
     int n = sizeof(arr)/sizeof(arr[0]);
-    for_each(arr, arr+n, increment1);
+
     for_each(arr, arr+n, [](int &x){x++;});
-  
-    for (int i=0; i<n; i++)
-        cout << arr[i] << " ";
+    for_each(arr, arr+n, [](int x){cout << x << " ";});
+    cout << endl;
+
+    increment incr(1); // init status
+    for_each(arr, arr+n, [&incr](int& x){ x = incr(x);});
+    for_each(arr, arr+n, [](int x){cout << x << " ";});
     cout << endl;
   
     return 0;

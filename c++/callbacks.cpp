@@ -41,13 +41,14 @@ public:
     std::string operator()(std::string data) 
     {
         cout << "-----3------" << endl;
+        std::cout << data << std::endl;
         for (int i = 0; i < data.size(); i++)
             if ((data[i] >= 'a' && data[i] <= 'z')
                     || (data[i] >= 'A' && data[i] <= 'Z'))
                 if (m_isIncremental)
-                    data[i] = data[i] + m_count;
+                    data[i] += m_count;
                 else
-                    data[i] = data[i] - m_count;
+                    data[i] -= m_count;
         return data;
     }
  
@@ -67,16 +68,16 @@ std::string buildCompleteMessage(std::string rawData, Encryptor encyptorFuncObj)
 int main() 
 {
     std::string msgs = buildCompleteMessage("SampleString", Encryptor());
-    std::cout << msgs << std::endl;
+    std::cout << msgs << std::endl << std::endl;
     
     std::string msg = buildCompleteMessage("SampleString", Encryptor(true, 1));
-    std::cout << msg << std::endl;
+    std::cout << msgs << std::endl << std::endl;
  
     msg = buildCompleteMessage("SampleString", Encryptor(true, 2));
-    std::cout << msg << std::endl;
+    std::cout << msgs << std::endl << std::endl;
  
     msg = buildCompleteMessage("SampleString", Encryptor(false, 1));
-    std::cout << msg << std::endl;
+    std::cout << msgs << std::endl << std::endl;
  
     return 0;
 }
