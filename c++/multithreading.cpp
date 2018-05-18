@@ -54,24 +54,29 @@ int main_1()
 */
 class DisplayThread
 {
+    string m_str;
 public:
-    void operator()()     
+    DisplayThread(string s) : m_str(s) {}
+    void operator()(string s)     
     {
         for(int i = 0; i < 10; i++)
-            std::cout<<"****** Thread Executing"<<std::endl;
+            std::cout<<"****** Thread Executing" + m_str + s <<std::endl;
     }
 };
  
-int main_2()  
+int main()  
 {
-    DisplayThread functor();
-    //functor();
-    //std::thread threadObj((functor()));
-    std::thread threadObj( (DisplayThread()) );
+    DisplayThread functor("-00000-");
+    std::thread threadObj1(std::ref(functor), "11111");
+
+    std::thread threadObj2( (DisplayThread("-22222-")), "33333" );
+
     for(int i = 0; i < 10; i++)
         std::cout<<"------ From Main Thread "<<std::endl;
+
     std::cout<<"Waiting For Thread to complete"<<std::endl;
-    threadObj.join();
+    threadObj1.join();
+    threadObj2.join();
     std::cout<<"Exiting from Main Thread"<<std::endl;
     return 0;
 }
@@ -111,7 +116,7 @@ class myFunctorClass
         int _x;
 };
  
-int main_4()
+int main_functor_3()
 {
     myFunctorClass addFive( 5 );
     std::cout << addFive( 6 ) << endl;
@@ -139,7 +144,7 @@ public:
         std::cout<<"Worker Thread "<<std::this_thread::get_id()<<" is Executing"<<std::endl;
     }
 };
-int main_5()  
+int main_join_detach()  
 {
     std::vector<std::thread> threadList;
     for(int i = 0; i < 10; i++)
@@ -185,7 +190,7 @@ void thread_func()
         std::cout<<"thread_function Executing"<<std::endl;
 }
  
-int main_6()  
+int main_RAII()  
 {
     std::thread threadObj(thread_func);
 
@@ -214,11 +219,11 @@ int main_6()
 */
 void threadCallback(int const & x)
 {
-    int & y = const_cast<int &>(x);
+    int & y = const_cast<int &>(x); //cast away its constness
     y++;
     std::cout<<"Inside Thread x = "<<x<<std::endl;
 }
-int main_7()
+int main_callback()
 {
     int x = 9;
     std::cout<<"In Main Thread : Before Thread Start x = "<<x<<std::endl;
@@ -251,13 +256,13 @@ public:
     }
 };
 
-int main_8() 
+int main_pass_value() 
 { 
     DummyClass dummyObj;
     int x = 10, y = 10;
     
-    std::thread threadObj1(&DummyClass::sampleMemberFunction,&dummyObj, x);
-    std::thread threadObj2(&DummyClass::sampleMemberFunctionRef,&dummyObj, ref(y));
+    std::thread threadObj1(&DummyClass::sampleMemberFunction, &dummyObj, x);
+    std::thread threadObj2(&DummyClass::sampleMemberFunctionRef, &dummyObj, ref(y));
     threadObj1.join();
     threadObj2.join();
     
@@ -286,7 +291,6 @@ public:
     void addMoney(int money)
     {
 		std::lock_guard<std::mutex> lockGuard(mutex);
-		// In constructor it locks the mutex
  
     	for(int i = 0; i < money; ++i)
 		{
@@ -302,7 +306,7 @@ public:
     }
  };
  
- int main_9()
+ int main_lock()
  {
     return 0;
  }
@@ -334,47 +338,47 @@ using namespace std::placeholders;
 
 class Application
 {
-  std::mutex m_mutex;
-  std::condition_variable m_condVar;
-  bool m_bDataLoaded;
+    std::mutex m_mutex;
+    std::condition_variable m_condVar;
+    bool m_bDataLoaded;
   
 public:
-  Application()
-  {
-    m_bDataLoaded = false;
-  }
-  void loadData()
-  {
-   // Make This Thread sleep for 1 Second
-   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-   std::cout<<"Loading Data from XML"<<std::endl;
-   // Lock The Data structure
-   std::lock_guard<std::mutex> guard(m_mutex);
-   // Set the flag to true, means data is loaded
-   m_bDataLoaded = true;
-   // Notify the condition variable
-   m_condVar.notify_one();
-  }
-  bool isDataLoaded()
-  {
-    return m_bDataLoaded;
-  }
-  void mainTask()
-  {
-    std::cout<<"Do Some Handshaking"<<std::endl;
-    // Acquire the lock
-    std::unique_lock<std::mutex> mlock(m_mutex);
-    // Start waiting for the Condition Variable to get signaled
-    // Wait() will internally release the lock and make the thread to block
-    // As soon as condition variable get signaled, resume the thread and
-    // again acquire the lock. Then check if condition is met or not
-    // If condition is met then continue else again go in wait.
-    m_condVar.wait(mlock, std::bind(&Application::isDataLoaded, this));
-    std::cout<<"Do Processing On loaded Data"<<std::endl;
-  }
+    Application()
+    {
+        m_bDataLoaded = false;
+    }
+
+    void loadData()
+    {
+        // Make This Thread sleep for 1 Second
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        std::cout<<"Loading Data from XML"<<std::endl;
+        std::lock_guard<std::mutex> guard(m_mutex);
+        m_bDataLoaded = true;
+        m_condVar.notify_one();
+    }
+
+    bool isDataLoaded()
+    {
+        return m_bDataLoaded;
+    }
+
+    void mainTask()
+    {
+        std::cout<<"Do Some Handshaking"<<std::endl;
+        // Acquire the lock
+        std::unique_lock<std::mutex> mlock(m_mutex);
+        // Start waiting for the Condition Variable to get signaled
+        // Wait() will internally release the lock and make the thread to block
+        // As soon as condition variable get signaled, resume the thread and
+        // again acquire the lock. Then check if condition is met or not
+        // If condition is met then continue else again go in wait.
+        m_condVar.wait(mlock, std::bind(&Application::isDataLoaded, this));
+        std::cout<<"Do Processing On loaded Data"<<std::endl;
+    }
 };
 
-int main_10()
+int main_producer_consumer()
 {
    Application app;
    std::thread thread_1(&Application::mainTask, &app);
@@ -409,7 +413,7 @@ void initiazer(std::promise<int> *promObj)
 *   If you want your thread to return multiple values at different point of time then just pass multiple 
 *   std::promise objects in thread and fetch multiple return values from thier associated multiple std::future objects.
 */
-int main_11()
+int main_future_promise_1()
 {
     /*1. create a promise object: As of now this promise object doesn’t have any associated value.
     *   But it gives a promise that somebody will surely set the value in it and once its set then
@@ -440,7 +444,7 @@ void print_int(std::future<int>& fut)
     std::cout << "value: " << x << '\n'; 
 }
 
-int main_12()
+int main_future_promise_2()
 {
     /* 1. create promise obj */
     std::promise<int> prom; 
@@ -463,14 +467,14 @@ int main_12()
 /* practice 3 */
 std::promise<int> prom;
 
-void print_global_promise () 
+void print_global_promise() 
 {
     std::future<int> fut = prom.get_future();
     int x = fut.get();
     std::cout << "value: " << x << '\n';
 }
 
-int main_13()
+int main_future_promise_3()
 {
     std::thread th1(print_global_promise);
     cout << "busing waiting 1..." << endl;
@@ -480,14 +484,14 @@ int main_13()
 
     prom = std::promise<int>();    // prom 被move赋值为一个新的 promise 对象.
 
-    std::thread th2 (print_global_promise);
+    std::thread th2(print_global_promise);
     cout << "busing waiting 2..." << endl;
     sleep(1);
     prom.set_value (20);
     th2.join();
     
-    ThreadRAII wrapper1(th1);
-    ThreadRAII wrapper2(th2);
+    //ThreadRAII wrapper1(th1);
+    //ThreadRAII wrapper2(th2);
 
     return 0;
 }
@@ -546,72 +550,47 @@ using namespace std::chrono;
  
 std::string fetchDataFromDB(std::string recvdData)
 {
-	// Make sure that function takes 5 seconds to complete
 	std::this_thread::sleep_for(seconds(1));
- 
-	//Do stuff like creating DB Connection and fetching Data
 	return "DB_" + recvdData;
 }
  
 std::string fetchDataFromFile(std::string recvdData)
 {
-	// Make sure that function takes 5 seconds to complete
 	std::this_thread::sleep_for(seconds(1));
- 
-	//Do stuff like fetching Data File
 	return "File_" + recvdData;
 }
- 
-int main_14()
+
+int main_async_1()
 {
-	// Get Start Time
 	system_clock::time_point start = system_clock::now();
  
-	//Fetch Data from DB
 	std::string dbData = fetchDataFromDB("Data");
- 
-	//Fetch Data from File
 	std::string fileData = fetchDataFromFile("Data");
  
-	// Get End Time
 	auto end = system_clock::now();
- 
 	auto diff = duration_cast < std::chrono::seconds > (end - start).count();
 	std::cout << "Total Time Taken = " << diff << " Seconds" << std::endl;
  
-	//Combine The Data
 	std::string data = dbData + " :: " + fileData;
- 
-	//Printing the combined Data
 	std::cout << "Data = " << data << std::endl;
  
 	return 0;
 }
 
-int main_15()
+int main_async_2()
 {
-	// Get Start Time
 	system_clock::time_point start = system_clock::now();
- 
+
 	std::future<std::string> resultFromDB = std::async(std::launch::async, fetchDataFromDB, "Data");
- 
-	//Fetch Data from File
 	std::string fileData = fetchDataFromFile("Data");
- 
-	//Fetch Data from DB
-	// Will block till data is available in future<std::string> object.
+	//will block till data is available in future<std::string> object.
 	std::string dbData = resultFromDB.get();
- 
-	// Get End Time
+
 	auto end = system_clock::now();
- 
-	auto diff = duration_cast < std::chrono::seconds > (end - start).count();
+	auto diff = duration_cast < std::chrono::seconds> (end - start).count();
 	std::cout << "Total Time Taken = " << diff << " Seconds" << std::endl;
  
-	//Combine The Data
 	std::string data = dbData + " :: " + fileData;
- 
-	//Printing the combined Data
 	std::cout << "Data = " << data << std::endl;
  
 	return 0;
@@ -627,7 +606,7 @@ std::string getDataFromDB( std::string token)
 	return data;
 }
  
-int main_16()
+int main_packaged_task_1()
 {
 	/* Create a packaged_task<> that encapsulated the callback i.e. a function */
 	std::packaged_task<std::string (std::string)> task(getDataFromDB);
@@ -649,13 +628,13 @@ int main_16()
 	return 0;
 }
 
-int main_17()
+int main_packaged_task_2()
 {
 	/* Create a packaged_task<> that encapsulated a lambda function */
 	std::packaged_task<std::string (std::string)> task([](std::string token)
 	{
-			std::string data = "Data From " + token;
-			return data;
+		std::string data = "Data From " + token;
+		return data;
 	});
  
 	/* Fetch the associated future<> from packaged_task<> */
@@ -687,7 +666,7 @@ struct DBDataFetcher
 	}
 };
  
-int main_18()
+int main_packaged_task_3()
 {
 	/* Create a packaged_task<> that encapsulated a lambda function */
 	std::packaged_task<std::string (std::string)> task(std::move(DBDataFetcher()));
@@ -748,17 +727,13 @@ void task_thread()
     std::cout << "task_thread:\t" << result.get() << '\n';
 }
  
-int main_19()
+int main_packaged_task_4()
 {
     task_lambda();
     task_bind();
     task_thread();
     return 0;
 }
-
-
-
-
 
 
 
@@ -798,7 +773,7 @@ public:
 };
  
 // Driver code
-int main_20()
+int main_functor_1()
 {
     int arr[] = {1, 2, 3, 4, 5};
     int n = sizeof(arr)/sizeof(arr[0]);
@@ -824,7 +799,7 @@ private:
     int num;
 };
   
-int main()
+int main_functor_2()
 {
     int arr[] = {1, 2, 3, 4, 5};
     int n = sizeof(arr)/sizeof(arr[0]);
